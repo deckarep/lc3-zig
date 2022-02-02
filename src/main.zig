@@ -134,20 +134,23 @@ const LC3 = struct {
 
             const op = @intToEnum(Op, instr >> 12);
             switch (op) {
-                .BR => {},
                 .ADD => self.op_add(instr),
                 .LD => self.op_ld(instr),
-                .ST => self.op_nop(instr),
-                .JSR => self.op_nop(instr),
+                .JMP => self.op_jmp(instr),
                 .AND => self.op_and(instr),
-                .LDR => self.op_nop(instr),
-                .STR => self.op_nop(instr),
-                .RTI => self.op_ignore(instr),
                 .NOT => self.op_not(instr),
                 .LDI => self.op_ldi(instr),
-                .STI => self.op_nop(instr),
-                .JMP => self.op_nop(instr),
+                
                 .RES => self.op_ignore(instr),
+                .RTI => self.op_ignore(instr),
+                
+                // TODO ops.
+                .BR => self.op_nop(instr),
+                .ST => self.op_nop(instr),
+                .JSR => self.op_nop(instr),
+                .LDR => self.op_nop(instr),
+                .STR => self.op_nop(instr),
+                .STI => self.op_nop(instr),
                 .LEA => self.op_nop(instr),
                 .TRAP => self.op_nop(instr),
             }
