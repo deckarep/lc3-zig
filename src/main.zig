@@ -55,7 +55,7 @@ const Flag = enum(u8) {
 fn sign_extend(val: u16, comptime bit_count: u16) u16 {
     var extended: u16 = val;
 
-    // When negative sign-extend with 1's to maintain "negative" values.
+    // When negative sign, extend with 1's to maintain "negative" values.
     if (extended & (1 << bit_count - 1) > 0) {
         extended |= @truncate(u16, (0xFFFF << bit_count));
         return extended;
@@ -201,6 +201,12 @@ const LC3 = struct {
         }
 
         self.update_flags(dr);
+    }
+
+    pub fn op_jmp(self: *LC3, instr: u16) void {
+        // per the docs, JMP is also a stand-in for RET via r7 done by assemblers.
+        const jr = self.reg[(instr >> 6) & 0x7];
+        self.reg[@enumToInt(Reg.PC)] = jr;
     }
 
     pub fn op_ld(self: *LC3, instr: u16) void {
