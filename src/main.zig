@@ -228,11 +228,9 @@ const LC3 = struct {
     }
 
     pub fn op_branch(self: *LC3, instr: u16) void {
-        const nFlag = (instr & 0x800) > 0;
-        const zFlag = (instr & 0x400) > 0;
-        const pFlag = (instr & 0x200) > 0;
+        const cond_flag = (instr >> 9) & 0x7;
 
-        if (nFlag or zFlag or pFlag) {
+        if (cond_flag & self.reg[@enumToInt(Reg.PC)]) {
             const pc_offset = sign_extend(instr & 0x1ff, 9);
             self.reg[@enumToInt(Reg.PC)] = self.reg[@enumToInt(Reg.PC)] + pc_offset;
         }
