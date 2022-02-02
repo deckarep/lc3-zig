@@ -8,6 +8,7 @@ const expect = std.testing.expect;
 // https://wchargin.com/lc3web/
 // Specification: https://justinmeiners.github.io/lc3-vm/supplies/lc3-isa.pdf
 
+const memory_size = 65536;
 const program_start_offset = 0x3000;
 
 const Reg = enum(u16) { R0 = 0, R1, R2, R3, R4, R5, R6, R7, PC, COND, COUNT };
@@ -66,23 +67,19 @@ fn sign_extend(val: u16, comptime bit_count: u16) u16 {
 
 const LC3 = struct {
     running: bool = false,
-    memory: [65536]u16 = undefined,
+    memory: [memory_size]u16 = undefined,
     reg: [@enumToInt(Reg.COUNT)]u16 = undefined,
 
     pub fn init() LC3 {
         var lc3 = LC3{};
         lc3.reset();
         return lc3;
-        // return LC3{
-        //     // .memory = [_]u16{0} ** 65536,
-        //     // .reg = [_]u16{0} ** @enumToInt(Reg.COUNT),
-        // };
     }
 
     pub fn reset(self: *LC3) void {
         self.running = false;
 
-        self.memory = [_]u16{0} ** 65536;
+        self.memory = [_]u16{0} ** memory_size;
         self.reg = [_]u16{0} ** @enumToInt(Reg.COUNT);
 
         self.reg[@enumToInt(Reg.PC)] = program_start_offset;
@@ -140,12 +137,12 @@ const LC3 = struct {
                 .AND => self.op_and(instr),
                 .NOT => self.op_not(instr),
                 .LDI => self.op_ldi(instr),
-                
+
                 .RES => self.op_ignore(instr),
                 .RTI => self.op_ignore(instr),
-                
+                .BR => self.op_branch(instr),
+
                 // TODO ops.
-                .BR => self.op_nop(instr),
                 .ST => self.op_nop(instr),
                 .JSR => self.op_nop(instr),
                 .LDR => self.op_nop(instr),
@@ -158,7 +155,7 @@ const LC3 = struct {
     }
 
     pub fn op_ignore(_: *LC3, _: u16) void {
-        @panic("instruction not implemented!");
+        @panic("instruction not implemented by design!");
     }
 
     pub fn op_nop(_: *LC3, _: u16) void {}
@@ -228,6 +225,17 @@ const LC3 = struct {
         self.reg[dr] = self.memory[self.memory[self.reg[@enumToInt(Reg.PC)] + pc_offset]];
 
         self.update_flags(dr);
+    }
+
+    pub fn op_branch(self: *LC3, instr: u16) void {
+        const nFlag = (instr & 0x800) > 0;
+        const zFlag = (instr & 0x400) > 0;
+        const pFlag = (instr & 0x200) > 0;
+
+        if (nFlag or zFlag or pFlag) {
+            const pc_offset = sign_extend(instr & 0x1ff, 9);
+            self.reg[@enumToInt(Reg.PC)] = self.reg[@enumToInt(Reg.PC)] + pc_offset;
+        }
     }
 };
 
